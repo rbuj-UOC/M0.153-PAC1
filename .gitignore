@@ -47,3 +47,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+.conda/
+Buj_PAC1.pdf
+Buj_PAC1.html
+biopsy_clean.csv
+.DS_Store

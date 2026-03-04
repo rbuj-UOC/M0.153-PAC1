@@ -11,9 +11,6 @@
         "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
         "editor.formatOnPaste": true
     },
-    "[rmd]": {
-        "editor.formatOnSave": true
-    },
     "r.helpPanel.cacheIndexFiles": "Workspace",
     "r.alwaysUseActiveTerminal": true,
     "r.rpath.mac": "${workspaceFolder}/.conda/bin/R",

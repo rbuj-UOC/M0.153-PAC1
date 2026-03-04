@@ -19,6 +19,7 @@ dependencies:
   - r-languageserver
   - r-mass
   - r-nortest
+  - r-patchwork
   - r-plotly
   - r-randomforest
   - r-rmarkdown

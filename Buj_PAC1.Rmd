@@ -1,0 +1,507 @@
+---
+title: 1a Prova d'Avaluació Contínua (PAC1)
+subtitle: "Programari per a l'anàlisi de dades"
+subject: "Màster universitari en bioinformàtica i bioestadística"
+author: "Robert Buj"
+date: "04/03/2026"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: false
+    highlight: tango
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: false
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{float}
+  - \usepackage[catalan]{babel}
+toc-title: "Taula de continguts"
+---
+
+\newpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    warning = FALSE, error = FALSE, message = FALSE,
+    # Opcions per a les figures
+    fig.align = "center"
+)
+suppressPackageStartupMessages({
+    library(datasets)
+    library(ggplot2)
+    library(knitr)
+    library(kableExtra)
+    library(MASS)
+})
+```
+
+# PAC1
+
+## Secció 1: Importació, gestió de dades i configuració
+
+### Apartat 1.1
+
+Crea un document R Markdown amb una capçalera que inclogui títol, autor, data i
+taula de continguts (toc: true). El document que presentis haurà de reflectir
+aquesta configuració.
+
+**Resposta:**
+
+```
+---
+title: 1a Prova d'Avaluació Contínua (PAC1)
+subtitle: "Programari per a l'anàlisi de dades"
+subject: "Màster universitari en bioinformàtica i bioestadística"
+author: "Robert Buj"
+date: "04/03/2026"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: false
+    highlight: tango
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: false
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{float}
+  - \usepackage[catalan]{babel}
+toc-title: "Taula de continguts"
+---
+```
+
+### Apartat 1.2
+
+Instal·la i carrega el paquet MASS. Carrega el conjunt de dades biopsy i
+recodifica els noms de totes les columnes perquè siguin exactament els següents
+(en minúscules): id, thickness, size_uni, shape_uni, adhesion, epi_size,
+bare_nuclei, chromatin, normal_nuclei, mitosis i class.
+
+**Resposta:**
+
+Instal·lació del paquet MASS:
+
+```{r instal·lar-carregar-paquet, attr.source=".numberLines", eval=FALSE}
+# comprovem quins paquets tenim instal·lats
+library()
+# si no tenim el paquet MASS, el podem instal·lar amb:
+install.packages("MASS")
+```
+
+Càrrega del paquet MASS i del conjunt de dades biopsy, i canvi dels noms de les
+variables:
+
+```{r carregar-dataset, attr.source=".numberLines"}
+# carreguem el paquet MASS
+library(MASS)
+# carreguem el conjunt de dades biopsy
+data(biopsy)
+# mostrem el nom de les columnes abans de la recodificació
+colnames(biopsy)
+# recodifiquem els noms de les columnes
+names(biopsy) <- c(
+    "id", "thickness", "size_uni", "shape_uni", "adhesion", "epi_size",
+    "bare_nuclei", "chromatin", "normal_nuclei", "mitosis", "class"
+)
+# mostrem l'estructura de biopsy després de la recodificació
+str(biopsy)
+```
+
+### Apartat 1.3
+
+Identifica la presència de valors perduts. Crea un nou data frame anomenat
+biopsy_clean eliminant totes les files que continguin valors nuls. Indica
+quantes files s'eliminen i discuteix breument quins problemes pot comportar
+treballar únicament amb els casos complets.
+
+**Resposta:**
+
+```{r valors-perduts, attr.source=".numberLines"}
+# comprovem si hi ha valors perduts
+sum(is.na(biopsy))
+# mostrem el resum estadístic de biopsy
+summary(biopsy)
+# creem el data frame biopsy_clean sense les files amb valors perduts
+biopsy_clean <- biopsy[complete.cases(biopsy), ]
+# comprovem el nombre de files eliminades
+num_files_eliminades <- nrow(biopsy) - nrow(biopsy_clean)
+num_files_eliminades
+# mostrem el resum estadístic de biopsy_clean
+summary(biopsy_clean)
+```
+
+En el conjunt de dades original hi ha `r nrow(biopsy)` observacions. Després
+d'eliminar les files amb valors perduts, en queden `r nrow(biopsy_clean)`. Per
+tant, s'han eliminat `r num_files_eliminades` files. El nombre d'eliminacions és
+molt petit en comparació amb el nombre d'observacions total. No obstant això,
+treballar només amb casos complets pot introduir un biaix si els valors perduts
+no són aleatoris. De fet, els valors perduts estan concentrats en la variable
+`bare_nuclei`, i això podria indicar que hi ha alguna característica comuna
+entre les observacions amb valors perduts. La pèrdua d'informació podria ser
+rellevant per a l'anàlisi, i la mostra resultant pot no ser representativa de la
+població original.
+
+### Apartat 1.4
+
+Exporta el data frame depurat a un fitxer anomenat `biopsy_clean.csv` sense
+incloure els números de fila. Abans de l'exportació, reflexiona breument sobre
+si la variable id és necessària per a l'anàlisi i quins problemes ètics podria
+comportar mantenir-la. Pren una decisió al respecte.
+
+**Resposta:**
+
+La variable id és un identificador únic per a cada observació, però no aporta
+informació rellevant per a l'anàlisi estadística. És un identificador
+artificial, creat pel sistema, que serveix per identificar cadascuna de les
+observacions, a part d'això no té cap significat en el món real.
+
+No obstant això, mantenir aquesta variable podria comportar problemes ètics, ja
+que podria permetre la identificació de pacients si les dades fossin reals
+i no anonimitzades.
+
+Per aquest motiu, és recomanable eliminar la variable `id` abans d'exportar el
+data frame depurat, ja que no és necessària per a l'anàlisi i ajuda a protegir
+la privacitat dels individus representats en el conjunt de dades.
+
+```{r exportar-dataset, attr.source=".numberLines"}
+library(dplyr)
+# eliminem la variable id amb select() del paquet dplyr
+biopsy_clean <- biopsy_clean |> select(-id)
+# exportem el data frame a un fitxer CSV sense incloure els números de les files
+write.csv(biopsy_clean, "biopsy_clean.csv", row.names = FALSE)
+```
+
+## Secció 2: Estructures de dades i manipulació avançada
+
+*En els apartats següents s'haurà de treballar amb el conjunt de dades generat
+a la secció anterior.*
+
+**Resposta:**
+
+### Apartat 2.1
+
+Crea una llista que contingui: un vector amb els noms de les variables, el
+resum estadístic de la variable `thickness` i el nombre total d'observacions.
+Mostra el contingut del segon element de la llista.
+
+```{r llista-multiple, attr.source=".numberLines"}
+# creem la llista
+resum <- list(
+    noms = names(biopsy_clean),
+    summary_thickness = summary(biopsy_clean$thickness),
+    total_observacions = nrow(biopsy_clean)
+)
+# mostrem el contingut del segon element de la llista
+resum[[2]]
+```
+
+### Apartat 2.2
+
+La variable class és un factor amb els nivells "benign" i "malignant".
+Recodifica les etiquetes d'aquest factor a "benign_case" i "malignant_case" (en
+minúscules).
+
+**Resposta:**
+
+```{r recodificar-class, attr.source=".numberLines"}
+# recodifiquem les etiquetes de la variable class
+biopsy_clean$class <- recode(biopsy_clean$class,
+    "benign" = "benign_case",
+    "malignant" = "malignant_case"
+)
+# mostrem els nivells de la variable class després de la recodificació
+levels(biopsy_clean$class)
+# mostrem el resum estadístic de la variable class després de la recodificació
+summary(biopsy_clean$class)
+```
+
+### Apartat 2.3
+
+Selecciona únicament les files que tinguin un valor de thickness superior a 7 i
+pertanyin a la class "malignant_case".
+
+**Resposta:**
+
+```{r seleccionar-filas, attr.source=".numberLines"}
+# seleccionem les files amb thickness > 7 i class == "malignant_case"
+biopsy_malignant <- biopsy_clean |>
+    filter(thickness > 7 & class == "malignant_case")
+# mostrem el nombre de files seleccionades
+nrow(biopsy_malignant)
+```
+
+### Apartat 2.4
+
+Insereix una fórmula en LaTeX que representi la mitjana i una imatge externa
+relacionada amb la biologia cel·lular.
+
+**Resposta:**
+
+Les fórmula de la mitjana és $\bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i$.
+
+```{r celula, echo=FALSE, out.width="60%", fig.pos='H', fig.cap="Diagrama d'una cèl·lula animal típica"}
+knitr::include_graphics("img/biological_cell.png")
+```
+
+Font de la imatge: [Diagrama d'una cèl·lula animal típica](https://ca.wikipedia.org/wiki/Fitxer:Biological_cell.svg)
+
+## Secció 3: Estadística descriptiva i contrastos
+
+### Apartat 3.1
+
+Calcula la mitjana, la mediana i la desviació típica de la variable size_uni.
+Desa els resultats en un vector. Indica breument si els valors obtinguts
+suggereixen una distribució aproximadament simètrica o no.
+
+**Resposta:**
+
+```{r simetria, attr.source=".numberLines"}
+# calcula la mitjana, la mediana i la desviació típica de size_uni
+resum_size_uni <- c(
+    mitjana = mean(biopsy_clean$size_uni),
+    mediana = median(biopsy_clean$size_uni),
+    desviacio_tipica = sd(biopsy_clean$size_uni)
+)
+# mostra els resultats
+resum_size_uni
+```
+
+Els valors obtinguts en les mesures descriptives suggereixen que la distribució
+de la variable `size_uni` no és aproximadament simètrica. La mitjana
+(`r resum_size_uni["mitjana"]`) > mediana (`r resum_size_uni["mediana"]`), la
+distribució està desplaçada cap a la dreta. A més, la desviació típica és
+relativament alta (`r resum_size_uni["desviacio_tipica"]`), el que indica una
+gran dispersió dels valors al voltant del centre.
+
+### Apartat 3.2
+
+Crea una nova variable anomenada high_mitosis, que prengui el valor "yes" si el
+valor de mitosis és superior a 5 i "no" en cas contrari. Explica quin tipus de
+variable és high_mitosis i per què pot resultar útil transformar una variable
+numèrica en categòrica en aquest context.
+
+**Resposta:**
+
+```{r nova-variable, attr.source=".numberLines"}
+# creem la variable high_mitosis
+biopsy_clean <- biopsy_clean |>
+    mutate(high_mitosis = ifelse(mitosis > 5, "yes", "no"))
+# mostrem el tipus de variable de high_mitosis
+class(biopsy_clean$high_mitosis)
+# mostrem els nivells de la variable high_mitosis
+levels(factor(biopsy_clean$high_mitosis))
+# mostrem el resum estadístic de la variable high_mitosis
+summary(factor(biopsy_clean$high_mitosis))
+```
+
+La variable `high_mitosis` és una variable categòrica binària, ja que només pot
+prendre dos valors: "yes" o "no". Transformar una variable numèrica en
+categòrica pot ser útil en aquest context perquè permet classificar les
+observacions en grups basats en un criteri específic (en aquest cas, el nombre
+de mitosis). Això pot facilitar l'anàlisi de la relació entre la mitosi i la
+malignitat, ja que es poden comparar les proporcions de casos amb alta mitosi
+entre les classes benignes i malignes. A més, les variables categòriques són més
+fàcils d'interpretar en alguns contextos clínics, on es prefereix parlar de
+"alta mitosi" en lloc de valors numèrics específics.
+
+### Apartat 3.3
+
+Genera una taula de contingència entre la variable class i la nova variable
+high_mitosis. Comenta breument quin patró s'observa a la taula.
+
+**Resposta:**
+
+```{r taula-contingencia, attr.source=".numberLines"}
+# creem la taula de freqüències absolutes entre class i high_mitosis
+taula_freq_absolutes <- table(biopsy_clean$class, biopsy_clean$high_mitosis)
+# mostrem la taula de freqüències absolutes
+taula_freq_absolutes
+# creen la taula de contingència a partir de les freqüències absolutes
+taula_contingencia <- prop.table(taula_freq_absolutes)
+# mostrem la taula de contingència
+taula_contingencia
+```
+
+En la taula de contingència, es pot observar que en la majoria de casos no tenen
+alta mitosi ("no"), però la proporció de casos amb alta mitosi és
+significativament més gran en els casos malignes que en els benignes.
+
+### Apartat 3.4
+
+Aplica el test més adequat per analitzar la relació entre la mitosi i la
+malignitat. Interpreta el valor p.
+
+**Resposta:**
+
+En el cas de tenir taules de contingència amb variables categòriques, podem usar
+la prova de khi quadrat.
+
+```{r test-khi-quadrat, attr.source=".numberLines"}
+# apliquem la prova de khi quadrat
+test_khi <- chisq.test(taula_freq_absolutes)
+# mostrem el resultat del test
+test_khi
+```
+
+Si mirem el p valor (p-value) en el resultat de la prova podrem determinar si
+les variables `class` i `high_mitosis` estan relacionades o no. En aquest cas,
+el p-valor és més petit que 0.05 (p = `r format(test_khi$p.value, scientific = FALSE, digits = 4)`),
+la prova és significativa i, per tant, les variables `class` i `high_mitosis`
+estan relacionades.
+
+## Secció 4: Visualització avançada i modelització lineal
+
+### Apartat 4.1
+
+Amb el paquet ggplot2, crea un gràfic de dispersió que relacioni `size_uni` (eix
+x) amb `shape_uni` (eix y). Els punts han de tenir colors diferents segons la
+variable `class`. Comenta breument què suggereix el gràfic sobre la separació
+entre classes i si sembla que hi ha relació entre `size_uni` i `shape_uni`.
+
+**Resposta:**
+
+```{r grafic-dispersio, attr.source=".numberLines"}
+# creem el gràfic de dispersió
+ggplot(biopsy_clean, aes(x = size_uni, y = shape_uni, color = class)) +
+    geom_point() +
+    labs(
+        title = "Relació entre size_uni, shape_uni i class",
+        x = "size_uni",
+        y = "shape_uni",
+        color = "class"
+    ) +
+    theme_minimal()
+```
+
+El gràfic mostra una certa separació entre les dues classes: els casos benignes
+semblen tenir valors més baixos de `size_uni` i `shape_uni`, mentre que els
+casos malignes tenen valors més alts. Això suggereix que hi ha una relació entre
+aquestes variables i la classe del tumor.
+
+### Apartat 4.2
+
+Calcula el model de regressió lineal per predir `size_uni` en funció de
+`thickness`. Mostra el resum del model i comenta el coeficient de determinació.
+Representa el núvol de punts amb la recta de regressió superposada i comenta si
+l'ajust sembla raonable.
+
+**Resposta:**
+
+```{r regressio-lineal, attr.source=".numberLines"}
+# creem el model de regressió lineal
+model <- lm(size_uni ~ thickness, data = biopsy_clean)
+# mostrem el resum del model
+summary(model)
+```
+
+El coeficient de determinació (R-squared) és `r round(summary(model)$r.squared, 4)`,
+el que indica que aproximadament el `r round(summary(model)$r.squared * 100, 2)`%
+de la variabilitat en la variable `size_uni` es pot explicar només amb la
+variable `thickness`.
+
+```{r grafica-regressio, attr.source=".numberLines"}
+# gràfic de dispersió amb la recta de regressió superposada
+# plot(
+#     biopsy_clean$thickness, biopsy_clean$size_uni,
+#     xlab = "Thickness", ylab = "Size_uni",
+#     main = "Regressió lineal de size_uni en funció de thickness"
+# )
+# abline(model, col = "red")
+ggplot(biopsy_clean, aes(x = thickness, y = size_uni)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    labs(
+        title = "Regressió lineal de size_uni en funció de thickness",
+        x = "thickness",
+        y = "size_uni"
+    ) +
+    theme_minimal()
+```
+
+El gràfic mostra una tendència positiva entre `thickness` i `size_uni`, però hi
+ha una gran dispersió dels punts al voltant de la recta de regressió. Això és
+coherent amb el valor relativament baix del R-squared, indicant que hi ha altres
+factors que també influeixen en `size_uni`.
+
+### Apartat 4.3
+
+Genera un gràfic per avaluar la normalitat dels residus. Contrasta l'assumpció
+de normalitat. Interpreta conjuntament el resultat del test i del gràfic.
+
+**Resposta:**
+
+```{r normalitat-residus, attr.source=".numberLines"}
+# obtenim els residus del model
+residus <- resid(model)
+# gràfic Q-Q per avaluar la normalitat dels residus
+qqnorm(residus, main = "Gràfic Q-Q dels residus")
+qqline(residus, col = "red")
+# test de Shapiro-Wilk per avaluar la normalitat dels residus
+shapiro_test <- shapiro.test(residus)
+shapiro_test
+```
+
+El gràfic Q-Q mostra que els residus no segueixen una distribució normal, ja que
+els punts no s'alineen al llarg de la línia recta. A més, el test de
+Shapiro-Wilk té un p-valor de `r format(shapiro_test$p.value, scientific = FALSE, digits = 4)`,
+que és menor que 0.05, indicant que podem rebutjar la hipòtesi nul·la de
+normalitat dels residus. Per tant, els residus del model no són normals, el que
+pot afectar la validesa de les inferències basades en aquest model de regressió
+lineal.
+
+### Apartat 4.4
+
+Presenta en una sola finestra un histograma de la variable mitosis i un boxplot
+de thickness segons la class, personalitzant els colors. Comenta breument les
+principals característiques d'ambdós gràfics.
+
+**Resposta:**
+
+```{r grafiques-combinades, attr.source=".numberLines"}
+# instal·lar si cal:
+# install.packages("patchwork")
+
+library(patchwork)
+
+# histograma de mitosis
+histograma_mitosis <- ggplot(biopsy_clean, aes(x = mitosis)) +
+    geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +
+    labs(title = "Histograma de mitosis", x = "mitosis", y = "Freqüència") +
+    theme_minimal()
+
+# boxplot de thickness segons class
+boxplot_thickness <- ggplot(
+    biopsy_clean,
+    aes(x = class, y = thickness, fill = class)
+) +
+    geom_boxplot() +
+    labs(
+        title = "Boxplot de thickness ~ class",
+        x = "class",
+        y = "thickness"
+    ) +
+    scale_fill_manual(
+        values = c(
+            "benign_case" = "lightgreen",
+            "malignant_case" = "salmon"
+        )
+    ) +
+    theme_minimal() +
+    theme(legend.position = "none")
+
+# combinació amb patchwork
+histograma_mitosis + boxplot_thickness
+```
+
+L'histograma de la variable `mitosis` mostra que la majoria de les observacions
+tenen un valor de mitosis baix, amb una distribució asimètrica cap a la dreta.
+
+El diagrama de caixa de `thickness` segons `class` mostra que els casos malignes
+tenen una mediana i una amplitud interquartílica més altes que els casos
+benignes, indicant que els malignes tendeixen a ser més gruixuts que els
+benignes.
