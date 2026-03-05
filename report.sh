@@ -8,7 +8,7 @@
 # parse command line options
 GENERATE_PDF=true
 GENERATE_HTML=true
-FILENAME="Buj_PAC1"
+FILENAME="resposta"
 while getopts "h-:" opt; do
     case "$opt" in
         -)
