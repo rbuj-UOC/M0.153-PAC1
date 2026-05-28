@@ -49,7 +49,9 @@ po/*~
 rsconnect/
 
 .conda/
-resposta.pdf
 resposta.html
+resposta.log
+resposta.pdf
+resposta.tex
 biopsy_clean.csv
 .DS_Store
